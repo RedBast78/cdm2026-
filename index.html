@@ -1393,14 +1393,14 @@ function renderAdmin() {
   container.appendChild(thirdsC);
 
   // Team name inputs per group
-  const inputsDiv = document.getElementById('thirds-team-inputs');
+  const thirdsTeamInputsDiv = document.getElementById('thirds-team-inputs');
   ['A','B','C','D','E','F','G','H','I','J','K','L'].forEach(g => {
     const val = results.thirdsTeams ? (results.thirdsTeams[g]||'') : '';
     const d = document.createElement('div');
     d.innerHTML = `<label style="font-size:0.75rem;color:var(--muted);display:block;margin-bottom:0.2rem">3e Groupe ${g}</label>
       <input type="text" id="third-team-${g}" value="${esc(val)}" placeholder="Équipe…" onchange="adminSaveThirdTeam('${g}')"
         style="width:100%;padding:0.5rem;background:var(--bg);border:1px solid var(--border);border-radius:6px;color:var(--text);font-size:0.85rem;outline:none;font-family:inherit">`;
-    inputsDiv.appendChild(d);
+    thirdsTeamInputsDiv.appendChild(d);
   });
 
   // Ranking list
