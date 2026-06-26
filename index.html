@@ -647,9 +647,9 @@ function renderThirdsList(order, pron, realOrder) {
   const list = document.getElementById('thirds-list');
   list.innerHTML = '';
   const total = order.length;
+  const realTop8 = (results.thirdsSet && realOrder.length > 0) ? realOrder.slice(0,8) : [];
+
   order.forEach((groupKey, pos) => {
-    // For participants: use their own group pronostic to find the 3rd team
-    // For admin view (pron=null): use official results.thirdsTeams
     let displayName, displayFlag;
     if (pron) {
       const t = getThirdFromPron(groupKey, pron);
@@ -661,15 +661,10 @@ function renderThirdsList(order, pron, realOrder) {
     }
     const qualifies = pos < 8;
 
-    // Result badge — only shown to admin
+    // Badge : 1pt si l'équipe est dans le top 8 du participant ET dans le top 8 officiel
     let badge = '';
-    if (isAdmin && realOrder.length > 0) {
-      const realPos = realOrder.indexOf(groupKey);
-      if (realPos !== -1) {
-        const realQualif = realPos < 8;
-        if (realPos === pos) badge = '<span style="margin-left:auto;font-size:0.75rem;background:rgba(39,174,96,0.2);color:var(--green);border-radius:4px;padding:1px 6px">+2pts</span>';
-        else if (realQualif === qualifies) badge = '<span style="margin-left:auto;font-size:0.75rem;background:rgba(232,184,75,0.15);color:var(--accent);border-radius:4px;padding:1px 6px">+1pt</span>';
-      }
+    if (!isAdmin && results.thirdsSet && realTop8.length > 0 && qualifies && realTop8.includes(groupKey)) {
+      badge = '<span style="font-size:0.75rem;background:rgba(39,174,96,0.2);color:var(--green);border-radius:4px;padding:1px 6px;flex-shrink:0">+1pt</span>';
     }
 
     const row = document.createElement('div');
