@@ -1228,15 +1228,8 @@ function computeScore(userId) {
     if (top2Exact && realOrder.length >= 2 &&
         predOrder[0] === realOrder[0] && predOrder[1] === realOrder[1]) gPts += 2;
   });
-  // Thirds scoring: 1pt per team correctly in top 8
-  // Only compute if admin has explicitly saved a thirds ranking (flagged by results.thirdsSet)
-  if (results.thirdsSet && results.thirds && results.thirds.length > 0 && pron.thirds && pron.thirds.length > 0) {
-    const realTop8 = results.thirds.slice(0, 8);
-    const predTop8 = pron.thirds.slice(0, 8);
-    predTop8.forEach(groupKey => {
-      if (realTop8.includes(groupKey)) thPts += 1;
-    });
-  }
+  // Thirds scoring: manual points set by admin per participant
+  thPts = results.thirdsManual ? (Number(results.thirdsManual[userId]) || 0) : 0;
   if (pron.global.winner && results.globalWinner && pron.global.winner===results.globalWinner) glPts+=10;
   if (pron.global.scorer && results.globalScorer && pron.global.scorer.toLowerCase().trim()===results.globalScorer.toLowerCase().trim()) glPts+=5;
   if (pron.global.bestPlayer && results.globalBestPlayer && pron.global.bestPlayer.toLowerCase().trim()===results.globalBestPlayer.toLowerCase().trim()) glPts+=5;
@@ -1319,6 +1312,32 @@ function renderAdmin() {
   const container = document.getElementById('admin-panel');
   container.innerHTML = '';
   container.innerHTML += `<div class="admin-note">⚠️ Zone admin. Les résultats saisis ici mettent à jour le classement pour tous en temps réel.</div>`;
+
+  // Manual thirds points
+  const thirdsManualCard = document.createElement('div');
+  thirdsManualCard.className = 'result-card';
+  thirdsManualCard.innerHTML = `<h4>3️⃣ Points meilleurs 3èmes — saisie manuelle</h4>
+    <p style="font-size:0.8rem;color:var(--muted);margin-bottom:0.75rem">Saisissez le nombre de points obtenus par chaque participant pour les meilleurs 3èmes (max 8pts).</p>
+    <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:0.5rem" id="thirds-manual-inputs"></div>
+    <div style="margin-top:0.75rem">
+      <button class="btn btn-primary" style="flex:none;padding:0.5rem 1.5rem" onclick="adminSaveThirdsManual()">Sauvegarder</button>
+    </div>`;
+  container.appendChild(thirdsManualCard);
+
+  const inputsDiv = document.getElementById('thirds-manual-inputs');
+  participants.forEach(p => {
+    const col = AVATAR_COLORS[p.colorIdx % AVATAR_COLORS.length];
+    const val = results.thirdsManual ? (results.thirdsManual[p.id] || 0) : 0;
+    const d = document.createElement('div');
+    d.style.cssText = 'display:flex;align-items:center;gap:0.5rem';
+    d.innerHTML = `
+      <span style="width:28px;height:28px;border-radius:50%;background:${col[0]};color:${col[1]};display:inline-flex;align-items:center;justify-content:center;font-size:0.7rem;font-weight:700;flex-shrink:0">${p.name.substring(0,2).toUpperCase()}</span>
+      <span style="font-family:Barlow Condensed,sans-serif;font-size:0.95rem;flex:1">${esc(p.name)}</span>
+      <input type="number" min="0" max="8" id="thirds-manual-${p.id}" value="${val}"
+        style="width:54px;height:36px;background:var(--bg);border:1px solid var(--border);border-radius:6px;color:var(--accent);text-align:center;font-size:1rem;font-weight:700;outline:none;font-family:Bebas Neue,sans-serif">
+      <span style="font-size:0.75rem;color:var(--muted)">pts</span>`;
+    inputsDiv.appendChild(d);
+  });
 
   // Global
   const gc = document.createElement('div');
@@ -1459,6 +1478,15 @@ window.adminMoveTeam = async function(key, teamName, dir) {
   order.splice(newIdx, 0, teamName);
   results.groups[key] = order;
   renderAdminGroup(key, order, GROUPS[key].teams);
+  await saveResults();
+};
+
+window.adminSaveThirdsManual = async function() {
+  if (!results.thirdsManual) results.thirdsManual = {};
+  participants.forEach(p => {
+    const val = document.getElementById('thirds-manual-'+p.id);
+    if (val) results.thirdsManual[p.id] = Number(val.value) || 0;
+  });
   await saveResults();
 };
 
