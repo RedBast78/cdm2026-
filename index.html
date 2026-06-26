@@ -467,10 +467,12 @@ function listenResults() {
   unsubResults = onSnapshot(doc(db,'config','results'), snap => {
     if (snap.exists()) {
       results = { groups:{}, globalWinner:'', globalScorer:'', ko:{}, ...snap.data() };
-      // Refresh leaderboard if visible
+      // Always refresh leaderboard scores (even if tab not visible, so data is ready)
       if (!document.getElementById('tab-leaderboard').classList.contains('hidden')) renderLeaderboard();
       // Refresh knockout badges
       if (!document.getElementById('tab-knockout').classList.contains('hidden')) renderKnockout();
+      // Refresh thirds if visible
+      if (!document.getElementById('tab-thirds').classList.contains('hidden')) renderThirds();
     }
   });
 }
@@ -752,6 +754,7 @@ window.adminMoveThird = async function(groupKey, dir) {
   order.splice(idx, 1);
   order.splice(newIdx, 0, groupKey);
   results.thirds = order;
+  results.thirdsSet = true;
   renderAdminThirdsList(order);
   // also refresh participant view if on thirds tab
   if (!document.getElementById('tab-thirds').classList.contains('hidden')) renderThirds();
@@ -1231,7 +1234,8 @@ function computeScore(userId) {
         predOrder[0] === realOrder[0] && predOrder[1] === realOrder[1]) gPts += 2;
   });
   // Thirds scoring: 1pt per team correctly in top 8
-  if (results.thirds && results.thirds.length > 0 && pron.thirds && pron.thirds.length > 0) {
+  // Only compute if admin has explicitly saved a thirds ranking (flagged by results.thirdsSet)
+  if (results.thirdsSet && results.thirds && results.thirds.length > 0 && pron.thirds && pron.thirds.length > 0) {
     const realTop8 = results.thirds.slice(0, 8);
     const predTop8 = pron.thirds.slice(0, 8);
     predTop8.forEach(groupKey => {
